@@ -13,9 +13,6 @@ Saya belajar pemrograman & sistem trading. Sedang mengembangkan keahlian di bida
 - Strategi pasar & pengujian
 
 ## 🛠️ Alat
-- MetaTrader 5 / MQL5
+- MetaTrader 5 / api crypto
 - Python
 - GitHub
-
-## 📬 Hubungi Saya
-- GitHub: [nama-akun-kamu]
