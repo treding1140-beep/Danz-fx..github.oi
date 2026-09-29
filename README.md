@@ -1,4 +1,4 @@
-# 👋 Hai, Saya [Nama Kamu]
+# 👋 Hai, Saya Danz_fx]
 
 ## Tentang Saya
 Saya belajar pemrograman & sistem trading. Sedang mengembangkan keahlian di bidang teknologi keuangan.
