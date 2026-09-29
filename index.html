@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danz_fx — Trader & Pengembang Sistem Arbitrase Latensi</title>
+<meta name="description" content="Portofolio Danz_fx: pengembang sistem trading otomatis dan arbitrase latensi dengan MQL5 dan Python.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#070B1A;
+  --panel:#0E1530;
+  --panel-2:#131C3F;
+  --line:#22305A;
+  --text:#E8ECF8;
+  --muted:#93A0C6;
+  --feed-a:#38BDF8;
+  --feed-b:#A78BFA;
+  --spread:#FBBF24;
+  --ok:#34D399;
+  --radius:18px;
+  --display:'Sora',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--display);
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+body::before{ /* cahaya latar */
+  content:"";position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(700px 500px at 85% -5%,rgba(56,189,248,.16),transparent 60%),
+    radial-gradient(600px 500px at -5% 35%,rgba(167,139,250,.14),transparent 60%),
+    radial-gradient(500px 400px at 90% 90%,rgba(251,191,36,.07),transparent 60%);
+}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--feed-a);outline-offset:3px;border-radius:6px}
+.wrap{width:min(1120px,92%);margin:0 auto}
+
+/* NAV */
+nav{
+  position:sticky;top:0;z-index:20;
+  backdrop-filter:blur(14px);
+  background:rgba(7,11,26,.7);
+  border-bottom:1px solid rgba(34,48,90,.7);
+}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+.logo{font-weight:800;font-size:1.15rem;letter-spacing:-.02em}
+.logo span{color:var(--feed-a)}
+.links{display:flex;gap:28px;font-size:.92rem;color:var(--muted)}
+.links a{transition:color .2s}
+.links a:hover{color:var(--text)}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 22px;border-radius:999px;font-weight:600;font-size:.95rem;
+  transition:transform .2s,box-shadow .2s,background .2s;
+}
+.btn-main{background:linear-gradient(135deg,var(--feed-a),var(--feed-b));color:#050818}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(56,189,248,.3)}
+.btn-ghost{border:1px solid var(--line);color:var(--text)}
+.btn-ghost:hover{background:var(--panel);border-color:var(--feed-a)}
+
+/* HERO */
+.hero{padding:88px 0 40px}
+.hero-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center}
+.status{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:7px 14px;border:1px solid var(--line);border-radius:999px;
+  font-size:.82rem;color:var(--muted);background:rgba(14,21,48,.7);
+}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(52,211,153,.6);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 10px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+h1{
+  font-size:clamp(2.4rem,5.4vw,4.1rem);line-height:1.08;letter-spacing:-.035em;font-weight:800;margin:22px 0 20px;
+}
+.grad{
+  background:linear-gradient(100deg,var(--feed-a) 10%,var(--feed-b) 55%,var(--spread) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.lead{color:var(--muted);font-size:1.08rem;max-width:520px}
+.cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:32px}
+.type{font-family:var(--mono);font-size:.9rem;color:var(--feed-a);margin-top:26px;min-height:1.6em}
+.type::after{content:"▍";animation:blink 1s steps(1) infinite;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+
+/* Monitor latensi (elemen utama) */
+.monitor{
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  border:1px solid var(--line);border-radius:22px;padding:18px 18px 20px;
+  box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.mon-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-bottom:10px}
+.legend{display:flex;gap:16px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+canvas{width:100%;height:230px;display:block;border-radius:12px;background:rgba(7,11,26,.6)}
+.readout{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.readout div{background:rgba(7,11,26,.6);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.readout small{display:block;color:var(--muted);font-size:.72rem}
+.readout b{font-family:var(--mono);font-weight:500;font-size:1.05rem}
+.slider{margin-top:16px}
+.slider label{display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted);margin-bottom:8px}
+.slider label b{font-family:var(--mono);color:var(--text);font-weight:500}
+input[type=range]{width:100%;accent-color:var(--spread);height:6px;cursor:pointer}
+.note{font-size:.74rem;color:var(--muted);margin-top:10px}
+
+/* Ticker */
+.ticker{border-block:1px solid var(--line);margin-top:60px;overflow:hidden;background:rgba(14,21,48,.5)}
+.ticker-track{display:flex;gap:56px;width:max-content;padding:16px 0;animation:scroll 32s linear infinite;font-family:var(--mono);font-size:.85rem;color:var(--muted)}
+.ticker-track span b{color:var(--text);font-weight:500}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* SECTION */
+section{padding:96px 0 10px}
+.sec-title{font-size:clamp(1.7rem,3.2vw,2.4rem);letter-spacing:-.025em;font-weight:700;margin-bottom:14px}
+.sec-sub{color:var(--muted);max-width:600px;margin-bottom:44px}
+
+/* Tentang */
+.about{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start}
+.about p{color:var(--muted);margin-bottom:16px;max-width:60ch}
+.about p strong{color:var(--text);font-weight:600}
+.focus{display:grid;gap:14px}
+.focus div{border-left:3px solid var(--feed-a);padding:6px 0 6px 16px}
+.focus div:nth-child(2){border-color:var(--feed-b)}
+.focus div:nth-child(3){border-color:var(--spread)}
+.focus h3{font-size:1rem}
+.focus p{font-size:.9rem;margin:2px 0 0}
+
+/* Proyek */
+.project{
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  border:1px solid var(--line);border-radius:var(--radius);padding:34px;margin-bottom:22px;
+  position:relative;overflow:hidden;
+  transition:border-color .3s,transform .3s;
+}
+.project:hover{border-color:#3B5192;transform:translateY(-3px)}
+.project.big::after{
+  content:"";position:absolute;right:-90px;top:-90px;width:260px;height:260px;border-radius:50%;
+  background:radial-gradient(circle,rgba(56,189,248,.22),transparent 70%);pointer-events:none;
+}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+.tag{font-family:var(--mono);font-size:.76rem;padding:5px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tag.hot{color:var(--spread);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.07)}
+.project h3{font-size:1.4rem;letter-spacing:-.015em}
+.project p{color:var(--muted);max-width:66ch;margin-top:10px}
+
+/* Alur sistem: urutan nyata, jadi bernomor */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:28px;counter-reset:s;position:relative}
+.step{position:relative;padding:0 14px 0 0}
+.step::before{
+  counter-increment:s;content:counter(s);
+  display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
+  background:var(--ink);border:1px solid var(--feed-a);color:var(--feed-a);
+  font-family:var(--mono);font-size:.85rem;position:relative;z-index:1;margin-bottom:14px;
+}
+.step::after{content:"";position:absolute;top:17px;left:34px;right:0;height:1px;background:linear-gradient(90deg,var(--feed-a),var(--line))}
+.step:last-child::after{display:none}
+.step h4{font-size:.98rem;margin-bottom:4px}
+.step p{font-size:.86rem;margin:0;color:var(--muted)}
+
+/* Alat */
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.tool{
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;
+  transition:border-color .25s,background .25s;
+}
+.tool:hover{border-color:var(--feed-b);background:var(--panel-2)}
+.tool .ic{font-size:1.6rem;margin-bottom:10px}
+.tool h4{font-size:1rem}
+.tool p{font-size:.84rem;color:var(--muted);margin-top:4px}
+
+/* Kontak */
+.contact{
+  text-align:center;padding:60px 28px;border-radius:26px;border:1px solid var(--line);
+  background:
+    radial-gradient(500px 240px at 50% 0%,rgba(56,189,248,.18),transparent 70%),
+    linear-gradient(180deg,var(--panel-2),var(--panel));
+}
+.contact h2{font-size:clamp(1.7rem,3.4vw,2.6rem);letter-spacing:-.03em;margin-bottom:12px}
+.contact p{color:var(--muted);max-width:480px;margin:0 auto 28px}
+footer{padding:44px 0 50px;text-align:center;color:var(--muted);font-size:.85rem}
+
+/* Reveal saat scroll: hanya untuk judul bagian */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s,transform .7s}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:900px){
+  .hero-grid,.about{grid-template-columns:1fr}
+  .tools{grid-template-columns:repeat(2,1fr)}
+  .flow{grid-template-columns:1fr 1fr;row-gap:26px}
+  .step:nth-child(2)::after{display:none}
+  .links{display:none}
+}
+@media (max-width:520px){
+  .hero{padding-top:56px}
+  .tools,.flow{grid-template-columns:1fr}
+  .step::after{display:none}
+  .project{padding:24px}
+  .readout b{font-size:.92rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .reveal{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="#top" class="logo">Danz<span>_fx</span></a>
+    <div class="links">
+      <a href="#tentang">Tentang</a>
+      <a href="#proyek">Proyek</a>
+      <a href="#alat">Alat</a>
+      <a href="#kontak">Kontak</a>
+    </div>
+    <a href="#kontak" class="btn btn-ghost">Hubungi saya</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="status"><i class="dot"></i> Sedang membangun strategi arbitrase latensi</span>
+      <h1>Saya membangun sistem trading yang <span class="grad">bergerak lebih cepat dari pasar.</span></h1>
+      <p class="lead">Halo, saya Danz_fx. Saya belajar pemrograman dan sistem trading, lalu mengubahnya menjadi bot yang mengeksekusi cepat dan menjaga risiko tetap terkendali.</p>
+      <div class="cta">
+        <a href="#proyek" class="btn btn-main">Lihat proyek</a>
+        <a href="#kontak" class="btn btn-ghost">Ajak kolaborasi</a>
+      </div>
+      <div class="type" id="typed" aria-live="off"></div>
+    </div>
+
+    <div class="monitor" aria-label="Simulasi selisih harga dua feed akibat latensi">
+      <div class="mon-head">
+        <div class="legend">
+          <span><i style="background:var(--feed-a)"></i>Feed cepat</span>
+          <span><i style="background:var(--feed-b)"></i>Feed lambat</span>
+        </div>
+        <span>SIMULASI</span>
+      </div>
+      <canvas id="chart" role="img" aria-label="Grafik dua garis harga dengan jeda waktu"></canvas>
+      <div class="readout">
+        <div><small>Latensi</small><b id="rLat">120 ms</b></div>
+        <div><small>Selisih saat ini</small><b id="rSpread" style="color:var(--spread)">0.0</b></div>
+        <div><small>Sinyal</small><b id="rSignal">Menunggu</b></div>
+      </div>
+      <div class="slider">
+        <label for="lat">Geser untuk mengubah latensi <b id="latVal">120 ms</b></label>
+        <input type="range" id="lat" min="0" max="400" step="10" value="120">
+      </div>
+      <p class="note">Semakin besar jeda antar-feed, semakin lebar selisih (area kuning) yang bisa dimanfaatkan. Data di atas hanya ilustrasi, bukan data pasar nyata.</p>
+    </div>
+  </div>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>Eksekusi cepat</span><span>Manajemen risiko</span><span>MQL5</span><span>Python</span><span>Backtesting</span><span>Arbitrase latensi</span><span>Bot otomatis</span><span>MetaTrader 5</span>
+      <span>Eksekusi cepat</span><span>Manajemen risiko</span><span>MQL5</span><span>Python</span><span>Backtesting</span><span>Arbitrase latensi</span><span>Bot otomatis</span><span>MetaTrader 5</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="tentang">
+    <div class="wrap">
+      <h2 class="sec-title reveal">Tentang saya</h2>
+      <div class="about">
+        <div class="reveal">
+          <p>Saya <strong>belajar pemrograman dan sistem trading</strong>, dan sedang mengembangkan keahlian di bidang teknologi keuangan.</p>
+          <p>Saat ini saya fokus pada <strong>strategi arbitrase latensi</strong>: memanfaatkan selisih waktu antar sumber harga, lalu membangun kode yang cukup cepat dan cukup disiplin untuk mengeksekusinya.</p>
+          <p>Setiap strategi saya uji dulu sebelum dipakai. Kecepatan tidak berguna kalau risikonya tidak terkendali.</p>
+        </div>
+        <div class="focus reveal">
+          <div><h3>Kecepatan</h3><p>Eksekusi dengan jeda sekecil mungkin.</p></div>
+          <div><h3>Risiko</h3><p>Batas kerugian dan ukuran posisi diatur di dalam kode.</p></div>
+          <div><h3>Pengujian</h3><p>Strategi diuji sebelum menyentuh akun sungguhan.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="proyek">
+    <div class="wrap">
+      <h2 class="sec-title reveal">Proyek saya</h2>
+      <p class="sec-sub reveal">Dua proyek yang sedang saya kerjakan.</p>
+
+      <article class="project big">
+        <h3>Sistem Arbitrase Latensi</h3>
+        <p>Sistem yang membandingkan dua sumber harga, mendeteksi selisih akibat jeda data, dan mengirim order secepat mungkin dengan batas risiko yang jelas.</p>
+        <div class="tag-row">
+          <span class="tag hot">Sedang dikembangkan</span>
+          <span class="tag">MQL5</span>
+          <span class="tag">Python</span>
+          <span class="tag">Eksekusi cepat</span>
+          <span class="tag">Manajemen risiko</span>
+        </div>
+        <div class="flow">
+          <div class="step"><h4>Baca dua feed</h4><p>Ambil harga dari sumber cepat dan lambat.</p></div>
+          <div class="step"><h4>Deteksi selisih</h4><p>Bandingkan dan hitung apakah selisih layak.</p></div>
+          <div class="step"><h4>Eksekusi</h4><p>Kirim order dengan jeda minimal.</p></div>
+          <div class="step"><h4>Kontrol risiko</h4><p>Batasi ukuran posisi dan potong rugi.</p></div>
+        </div>
+      </article>
+
+      <article class="project">
+        <h3>Bot Otomatis</h3>
+        <p>Bot yang menjalankan strategi pasar secara otomatis, lengkap dengan proses pengujian sebelum dipakai.</p>
+        <div class="tag-row">
+          <span class="tag">Strategi pasar</span>
+          <span class="tag">Pengujian</span>
+          <span class="tag">Python</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="alat">
+    <div class="wrap">
+      <h2 class="sec-title reveal">Alat yang saya pakai</h2>
+      <p class="sec-sub reveal">Yang saya gunakan setiap hari untuk meneliti, membangun, dan mengirim kode.</p>
+      <div class="tools">
+        <div class="tool"><div class="ic">📊</div><h4>MetaTrader 5</h4><p>Platform trading dan Expert Advisor.</p></div>
+        <div class="tool"><div class="ic">🔌</div><h4>API crypto</h4><p>Sumber data dan eksekusi bursa kripto.</p></div>
+        <div class="tool"><div class="ic">🐍</div><h4>Python</h4><p>Analisis data, backtesting, dan otomatisasi.</p></div>
+        <div class="tool"><div class="ic">🐙</div><h4>GitHub</h4><p>Kontrol versi dan tempat proyek saya.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="kontak">
+    <div class="wrap">
+      <div class="contact reveal">
+        <h2>Mari berdiskusi soal trading otomatis</h2>
+        <p>Punya ide strategi atau ingin berkolaborasi? Lihat proyek saya di GitHub.</p>
+        <!-- GANTI dengan link GitHub kamu -->
+        <a class="btn btn-main" href="https://github.com/" target="_blank" rel="noopener">Buka GitHub</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">© <span id="yr"></span> Danz_fx. Konten di situs ini bersifat edukasi dan bukan saran investasi.</div>
+</footer>
+
+<script>
+(function(){
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  /* Teks mengetik */
+  var phrases = ['MQL5 + Python','arbitrase latensi','eksekusi cepat & risiko terkendali'];
+  var el = document.getElementById('typed');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) { el.textContent = '> ' + phrases[0]; }
+  else {
+    var p = 0, c = 0, del = false;
+    (function tick(){
+      var t = phrases[p];
+      el.textContent = '> ' + t.slice(0, c);
+      if (!del && c === t.length) { del = true; return setTimeout(tick, 1400); }
+      if (del && c === 0) { del = false; p = (p + 1) % phrases.length; }
+      c += del ? -1 : 1;
+      setTimeout(tick, del ? 35 : 75);
+    })();
+  }
+
+  /* Reveal judul bagian */
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  }, {threshold:.15});
+  document.querySelectorAll('.reveal').forEach(function(n){ io.observe(n); });
+
+  /* Simulasi dua feed dengan latensi */
+  var cv = document.getElementById('chart'), ctx = cv.getContext('2d');
+  var slider = document.getElementById('lat');
+  var rLat = document.getElementById('rLat'), latVal = document.getElementById('latVal');
+  var rSpread = document.getElementById('rSpread'), rSignal = document.getElementById('rSignal');
+  var W, H, dpr;
+  var N = 220;            // jumlah titik ditampilkan
+  var STEP_MS = 1000/60;  // satu sampel per frame (~16.7 ms)
+  var MAXLAG = Math.ceil(400/STEP_MS) + 2;
+  var hist = [], price = 100;
+
+  function resize(){
+    dpr = window.devicePixelRatio || 1;
+    var r = cv.getBoundingClientRect();
+    W = r.width; H = r.height;
+    cv.width = W*dpr; cv.height = H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function step(){
+    // langkah acak dengan sedikit momentum agar terlihat seperti harga
+    var last = hist.length ? hist[hist.length-1] : price;
+    var prev = hist.length > 1 ? hist[hist.length-2] : last;
+    price = last + (last - prev)*0.82 + (Math.random()-0.5)*0.55;
+    // tarik pelan ke 100 supaya tidak melayang jauh
+    price += (100 - price)*0.004;
+    hist.push(price);
+    if (hist.length > N + MAXLAG + 5) hist.shift();
+  }
+  for (var i=0;i<N+MAXLAG+5;i++) step();
+
+  function draw(){
+    var lag = Math.round(+slider.value / STEP_MS);
+    var len = hist.length;
+    var A = hist.slice(len - N);
+    var B = [];
+    for (var i=0;i<N;i++){ B.push(hist[len - N + i - lag]); }
+
+    var all = A.concat(B), mn = Math.min.apply(null,all), mx = Math.max.apply(null,all);
+    var pad = (mx-mn)*0.15 + 0.2; mn -= pad; mx += pad;
+    function X(i){ return i/(N-1)*W; }
+    function Y(v){ return H - (v-mn)/(mx-mn)*H; }
+
+    ctx.clearRect(0,0,W,H);
+    // grid
+    ctx.strokeStyle = 'rgba(147,160,198,.08)'; ctx.lineWidth = 1;
+    for (var g=1; g<5; g++){ ctx.beginPath(); ctx.moveTo(0,H*g/5); ctx.lineTo(W,H*g/5); ctx.stroke(); }
+
+    // area selisih
+    ctx.beginPath();
+    for (i=0;i<N;i++){ ctx.lineTo(X(i),Y(A[i])); }
+    for (i=N-1;i>=0;i--){ ctx.lineTo(X(i),Y(B[i])); }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(251,191,36,.28)'; ctx.fill();
+
+    function line(arr,color){
+      ctx.beginPath();
+      for (var k=0;k<N;k++){ k?ctx.lineTo(X(k),Y(arr[k])):ctx.moveTo(X(k),Y(arr[k])); }
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    }
+    line(B,'#A78BFA');
+    line(A,'#38BDF8');
+
+    // titik ujung
+    [[A,'#38BDF8'],[B,'#A78BFA']].forEach(function(o){
+      var x = X(N-1), y = Y(o[0][N-1]);
+      ctx.beginPath(); ctx.arc(x-3,y,4,0,7); ctx.fillStyle = o[1]; ctx.fill();
+    });
+
+    // readout
+    var diff = A[N-1] - B[N-1];
+    var ad = Math.abs(diff);
+    rSpread.textContent = ad.toFixed(2);
+    var thr = 0.35;
+    if (lag === 0) { rSignal.textContent = 'Tidak ada'; rSignal.style.color = 'var(--muted)'; }
+    else if (ad > thr) { rSignal.textContent = diff > 0 ? 'BELI' : 'JUAL'; rSignal.style.color = 'var(--ok)'; }
+    else { rSignal.textContent = 'Menunggu'; rSignal.style.color = 'var(--muted)'; }
+  }
+
+  slider.addEventListener('input', function(){
+    var t = slider.value + ' ms'; rLat.textContent = t; latVal.textContent = t;
+    if (reduce) draw();
+  });
+
+  window.addEventListener('resize', function(){ resize(); draw(); });
+  resize(); draw();
+
+  if (!reduce) {
+    var running = true, acc = 0, lastT = performance.now();
+    new IntersectionObserver(function(e){ running = e[0].isIntersecting; }).observe(cv);
+    (function loop(t){
+      if (running) {
+        acc += t - lastT;
+        while (acc >= STEP_MS) { step(); acc -= STEP_MS; }
+        draw();
+      }
+      lastT = t;
+      requestAnimationFrame(loop);
+    })(lastT);
+  }
+})();
+</script>
+</body>
+</html>
